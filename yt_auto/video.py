@@ -56,3 +56,33 @@ def concat(clips: list, out: str) -> None:
             f.write(f"file '{os.path.abspath(c)}'\n")
     _run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", listfile, "-c", "copy", out])
     os.remove(listfile)
+
+
+def duration(path: str) -> float:
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                          "-of", "default=nw=1:nk=1", path],
+                         check=True, capture_output=True, text=True)
+    return float(out.stdout.strip())
+
+
+def render_thumbnail(text: str, path: str) -> None:
+    """1280x720 thumbnail: max 3 big words, high contrast at feed size."""
+    w, h = 1280, 720
+    img = Image.new("RGB", (w, h), (15, 15, 25))
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([0, int(h * 0.78), w, h], fill=(230, 40, 40))
+    words = text.upper().split()
+    lines = textwrap.wrap(" ".join(words), width=12)
+    size = 170
+    font = _font(size)
+    while size > 60 and max(draw.textlength(l, font=font) for l in lines) > w * 0.9:
+        size -= 10
+        font = _font(size)
+    line_h = int(font.size * 1.1)
+    y = (int(h * 0.78) - line_h * len(lines)) // 2
+    for line in lines:
+        lw = draw.textlength(line, font=font)
+        draw.text(((w - lw) / 2, y), line, font=font, fill=(255, 220, 0),
+                  stroke_width=8, stroke_fill="black")
+        y += line_h
+    img.save(path)

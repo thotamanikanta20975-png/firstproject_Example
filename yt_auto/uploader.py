@@ -49,8 +49,17 @@ def upload(folder: str, privacy: str = "private", publish_at: str | None = None)
         "status": status,
     }
     media = MediaFileUpload(os.path.join(folder, "video.mp4"), chunksize=-1, resumable=True)
-    request = _service().videos().insert(part="snippet,status", body=body, media_body=media)
+    youtube = _service()
+    request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
     response = None
     while response is None:
         _, response = request.next_chunk()
-    return response["id"]
+    video_id = response["id"]
+
+    thumb = os.path.join(folder, "thumbnail.png")
+    if os.path.exists(thumb):
+        try:  # custom thumbnails need a phone-verified channel
+            youtube.thumbnails().set(videoId=video_id, media_body=MediaFileUpload(thumb)).execute()
+        except Exception as e:
+            print(f"Thumbnail not set ({e}). Verify your channel at youtube.com/verify.")
+    return video_id

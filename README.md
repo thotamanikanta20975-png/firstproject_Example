@@ -1,12 +1,21 @@
 # YouTube Automation
 
-Turns a topic into a ready-to-upload YouTube video:
+Turns a topic into a ready-to-upload YouTube video, using the
+[youtube-agent-skill](https://github.com/Jakeschincariol/youtube-agent-skill)
+pack (installed in `.claude/skills/`, MIT licence):
 
-1. **Script** – Claude writes the title, description, tags and narration.
-2. **Voice** – free neural text-to-speech (edge-tts).
-3. **Video** – caption slides + voice stitched into an MP4 with ffmpeg
-   (vertical 1080×1920 for Shorts, or 1920×1080 for long videos).
-4. **Upload** – YouTube Data API, private by default, with optional scheduling.
+1. **Hook + packaging** – Claude drafts 5 hooks from the skill's 21 hook formulas
+   and 10 title/thumbnail pairings. The skill's `hookscore.py` picks the strongest
+   hook and `title.py` picks the best title + thumbnail pairing.
+2. **Script** – Claude writes the script around the winners, following the
+   `/yt-script` shape (hook, turn, one idea per beat, payoff, one ask) and the
+   `/yt-seo` description rules.
+3. **Voice** – free neural text-to-speech (edge-tts).
+4. **Video** – caption slides + voice stitched into an MP4 with ffmpeg
+   (vertical 1080×1920 for Shorts, or 1920×1080 for long videos), plus a
+   thumbnail, captions file and (long videos) chapters checked against the
+   `/yt-chapters` rules.
+5. **Upload** – YouTube Data API, private by default, with optional scheduling.
 
 ## Setup
 
@@ -30,8 +39,31 @@ python main.py upload output/5-surprising-facts-about-octopuses
 python main.py upload output/<folder> --publish-at 2026-11-02T15:00:00Z
 ```
 
-Each video lands in `output/<topic>/` with `video.mp4` and `metadata.json`.
-**Watch every video and fact-check it before publishing.**
+Each video lands in `output/<topic>/`:
+
+| file | what it is |
+| --- | --- |
+| `video.mp4` | the video |
+| `thumbnail.png` | 1280×720 thumbnail (uploaded automatically if your channel is verified) |
+| `captions.srt` | subtitles |
+| `metadata.json` | title, description, tags |
+| `review.md` | every hook and title with its skill score – read this first |
+
+**Watch every video and fact-check it before publishing.** As the skill says:
+ship it, or change it?
+
+### Your voice (recommended)
+
+Copy `templates/voice.md` to `voice.md` (or `~/.claude/youtube/voice.md`) and
+fill it in. Claude writes every script in that voice.
+
+### The other skills (in Claude Code)
+
+Open this repo in Claude Code and the skills are available as commands:
+`/yt-plan` (weekly plan), `/yt-viral` (what's working in your niche),
+`/yt-retention` (read your retention export), `/yt-comment` (reply to comments),
+`/yt-shorts` (cut Shorts from a long video), `/yt-audit` (one fix for your channel),
+plus `/yt-script`, `/yt-package`, `/yt-seo`, `/yt-chapters`, `/yt-edit`.
 
 ## How to actually earn money
 
